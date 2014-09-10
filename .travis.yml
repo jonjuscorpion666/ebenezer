@@ -12,7 +12,7 @@ install:
 - ci/sbt-setup.sh
 - ci/sbt-setup-version.sh
 script:
-- sbt -Dsbt.global.base=$TRAVIS_BUILD_DIR/ci '; test; package; project example; test; assembly; project tools; assembly'
+- sbt -Dsbt.global.base=$TRAVIS_BUILD_DIR/ci '; test; package; project example; test; assembly; project tools; test; assembly'
   && ci/sbt-deploy.sh && ci/gh-pages.sh
 after_script:
 - rm -rf ci
