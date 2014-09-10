@@ -25,10 +25,10 @@ import au.com.cba.omnia.uniform.assembly.UniformAssemblyPlugin._
 import au.com.cba.omnia.humbug.HumbugSBT._
 
 object build extends Build {
-  val thermometerVersion = "0.3.2-20140818231306-749dcce"
+  val thermometerVersion = "0.3.2-20140922073751-6b24890-CDH5"
 
   lazy val standardSettings =
-    Defaults.defaultSettings ++
+    Defaults.coreDefaultSettings ++
     uniformDependencySettings ++
     uniform.docSettings("https://github.com/CommBank/ebenezer") ++ Seq(
       logLevel in sbtassembly.Plugin.AssemblyKeys.assembly := Level.Error
@@ -56,10 +56,10 @@ object build extends Build {
         ++ humbugSettings
         ++ Seq(
           libraryDependencies ++=
-            depend.hadoop() ++ depend.scalding() ++ depend.scalaz() ++ depend.testing() ++ Seq(
-              "com.twitter"       % "parquet-cascading" % "1.4.1",
-              "au.com.cba.omnia" %% "thermometer"       % thermometerVersion % "test",
-              "au.com.cba.omnia" %% "humbug-core"       % "0.3.0-20140918054014-3066286" % "test"
+            depend.hadoop() ++ depend.scalding() ++ depend.scalaz() ++
+            depend.parquet() ++ Seq(
+              "au.com.cba.omnia" %% "humbug-core" % "0.3.0-20140916025213-f0a7e7f-CDH5",
+              "au.com.cba.omnia" %% "thermometer" % thermometerVersion % "test"
             ),
           scroogeThriftSourceFolder in Test <<= (sourceDirectory) { _ / "test" / "thrift" / "scrooge" },
           humbugThriftSourceFolder  in Test <<= (sourceDirectory) { _ / "test" / "thrift" / "humbug" },
@@ -75,8 +75,7 @@ object build extends Build {
         ++ uniform.project("ebenezer-test", "au.com.cba.omnia.ebenezer.test")
         ++ Seq(
           libraryDependencies ++=
-            depend.hadoop() ++ depend.scalaz() ++ depend.testing() ++
-            depend.omnia("thermometer", thermometerVersion)
+            depend.hadoop() ++ depend.omnia("thermometer", thermometerVersion)
         )
   ).dependsOn(core)
 
@@ -89,8 +88,8 @@ object build extends Build {
         ++ uniformThriftSettings
         ++ Seq(
           libraryDependencies ++=
-            depend.hadoop() ++ depend.scalding() ++ depend.testing() ++
-            depend.omnia("cascading-hive", "1.4.1-20140825002026-2ed62bf") ++
+            depend.hadoop() ++ depend.parquet() ++
+            depend.omnia("cascading-hive", "1.5.0-20140922074523-df043ae-CDH5") ++
             Seq(
               "au.com.cba.omnia" %% "thermometer" % thermometerVersion % "test"
             )
@@ -107,11 +106,11 @@ object build extends Build {
         ++ uniformAssemblySettings
         ++ Seq(
           libraryDependencies ++=
-            depend.hadoop() ++ depend.scalding() ++ depend.scalaz() ++ depend.testing() ++ Seq(
-              "com.twitter" % "parquet-tools" % "1.4.1"
+            depend.hadoop() ++ depend.parquet() ++ depend.scalaz() ++ Seq(
+              "com.twitter" % "parquet-tools" % "1.4.1" intransitive()
             )
         )
-  ).dependsOn(core)
+  ).dependsOn(core % "test->test")
 
   lazy val example = Project(
     id = "example",
@@ -124,11 +123,8 @@ object build extends Build {
         ++ Seq(
           parallelExecution in Test := false,
           libraryDependencies ++=
-            depend.hadoop() ++ depend.scalding() ++ depend.testing() ++
-            depend.omnia("thermometer-hive", thermometerVersion) ++ Seq(
-              "com.twitter" % "parquet-hive" % "1.2.5-cdh4.6.0" % "test"
-            )
+            depend.hadoop() ++ depend.parquet() ++
+            depend.omnia("thermometer-hive", thermometerVersion)
         )
-  ).dependsOn(hive)
-   .dependsOn(test % "test")
+  ).dependsOn(hive, test % "test")
 }
