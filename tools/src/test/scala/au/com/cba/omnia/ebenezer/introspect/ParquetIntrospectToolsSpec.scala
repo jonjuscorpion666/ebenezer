@@ -39,7 +39,7 @@ import parquet.thrift.ThriftSchemaConverter
 import parquet.format.Util
 import parquet.hadoop.ParquetReader
 
-object ParquetIntrospectToolsSpec extends ThermometerSpec { def is = s2"""
+object ParquetIntrospectToolsSpec extends ThermometerSpec with HadoopSupport { def is = s2"""
 
 Introspect usage
 ================
@@ -74,7 +74,7 @@ Introspect on all types
     withData(name, data)(context => {
       /* Gather all the parquet files and read each of them as "Records" of fields / value pairs */
       val result = context.glob(name </> "*.parquet").flatMap(
-        ParquetIntrospectTools.listFromPath(conf, _))
+        ParquetIntrospectTools.listFromPath(jobConf, _))
 
       result.toSet must_== data.map(fromCustomer).toSet
     })
@@ -146,7 +146,7 @@ Introspect on all types
     propNoShrink { (data: List[A], uuid: UUID) => isolate {
       withData(name, data)(context => {
         val result = context.glob(name </> "*.parquet").flatMap(
-          ParquetIntrospectTools.listFromPath(conf, _))
+          ParquetIntrospectTools.listFromPath(jobConf, _))
         result.toSet must_== data.map(converter).toSet
       })
     } }.set(minTestsOk = 10)
