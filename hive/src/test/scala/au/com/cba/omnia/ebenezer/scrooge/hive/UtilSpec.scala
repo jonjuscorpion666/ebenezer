@@ -21,6 +21,8 @@ import org.apache.hadoop.hive.metastore.api.FieldSchema
 import org.specs2.Specification
 import org.specs2.matcher.ThrownExpectations
 
+import org.apache.hadoop.hive.metastore.api.StorageDescriptor
+
 class UtilSpec extends Specification with ThrownExpectations { def is = s2"""
 
 UtilSpec
@@ -43,7 +45,7 @@ UtilSpec
       new FieldSchema("string", "string", com)
     )
 
-    val td = Util.createHiveTableDescriptor[Primitives]("db", "test", List.empty)
+    val td = Util.createHiveTableDescriptor[Primitives]("db", "test", List.empty, ParquetFormat)
     val actual = td.toHiveTable.getSd.getCols.asScala.toList
 
     actual must_== expected
@@ -54,9 +56,11 @@ UtilSpec
       new FieldSchema("short", "smallint", com), new FieldSchema("list", "array<int>", com)
     )
 
-    val td = Util.createHiveTableDescriptor[Listish]("db", "test", List.empty)
-    val actual = td.toHiveTable.getSd.getCols.asScala.toList
+    val td = Util.createHiveTableDescriptor[Listish]("db", "test", List.empty, ParquetFormat)
+    val sd = td.toHiveTable.getSd
+    val actual = sd.getCols.asScala.toList
 
+    verifyInputOutputFormatForParquet(sd)
     actual must_== expected
   }
 
@@ -65,7 +69,7 @@ UtilSpec
       new FieldSchema("short", "smallint", com), new FieldSchema("map", "map<int,string>", com)
     )
 
-    val td = Util.createHiveTableDescriptor[Mapish]("db", "test", List.empty)
+    val td = Util.createHiveTableDescriptor[Mapish]("db", "test", List.empty, ParquetFormat)
     val actual = td.toHiveTable.getSd.getCols.asScala.toList
 
     actual must_== expected
@@ -76,9 +80,17 @@ UtilSpec
       new FieldSchema("nested", "map<int,map<string,array<int>>>", com)
     )
 
-    val td = Util.createHiveTableDescriptor[Nested]("db", "test", List.empty)
-    val actual = td.toHiveTable.getSd.getCols.asScala.toList
+    val td = Util.createHiveTableDescriptor[Nested]("db", "test", List.empty, ParquetFormat)
+    val sd = td.toHiveTable.getSd
 
+    val actual = sd.getCols.asScala.toList
+
+    verifyInputOutputFormatForParquet(sd)
     actual must_== expected
+  }
+
+  def verifyInputOutputFormatForParquet(sd: StorageDescriptor) {
+    sd.getInputFormat() must_== "parquet.hive.DeprecatedParquetInputFormat"
+    sd.getOutputFormat() must_== "parquet.hive.DeprecatedParquetOutputFormat"
   }
 }

@@ -32,7 +32,7 @@ import com.twitter.scrooge.ThriftStruct
   * in Parquet format.
   */
 case class HiveParquetScroogeSource[T <: ThriftStruct]
-  (database: String, table: String, location: Option[String] = None)
+  (database: String, table: String, format: HiveFormat, location: Option[String] = None)
   (implicit m : Manifest[T], conv: TupleConverter[T], set: TupleSetter[T])
   extends Source
   with TypedSink[T]
@@ -40,7 +40,7 @@ case class HiveParquetScroogeSource[T <: ThriftStruct]
   with java.io.Serializable {
 
   lazy val hdfsScheme =
-    HadoopSchemeInstance(new ParquetScroogeScheme[T].asInstanceOf[Scheme[_, _, _, _, _]])
+    HadoopSchemeInstance(Util.createSchemaBasedOnFormat(format))
 
   override def createTap(readOrWrite: AccessMode)(implicit mode: Mode): Tap[_, _, _] = mode match {
     case Local(_)              => sys.error("Local mode is currently not supported for ${toString}")
@@ -51,7 +51,7 @@ case class HiveParquetScroogeSource[T <: ThriftStruct]
         p
       }
       val tableDescriptor =
-        Util.createHiveTableDescriptor[T](database, table, List(), path)
+        Util.createHiveTableDescriptor[T](database, table, List(), format, path)
 
       CastHfsTap(new HiveTap(tableDescriptor, hdfsScheme, SinkMode.REPLACE, true))
     }
@@ -75,5 +75,5 @@ object HiveParquetScroogeSource {
     */
   def apply[T <: ThriftStruct : Manifest : TupleConverter : TupleSetter]
   (database: String, table: String, location: String) =
-    new HiveParquetScroogeSource[T](database, table, Some(location))
+    new HiveParquetScroogeSource[T](database, table, ParquetFormat, Some(location))
 }

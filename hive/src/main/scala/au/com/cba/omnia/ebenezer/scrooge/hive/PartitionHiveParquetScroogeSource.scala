@@ -52,8 +52,8 @@ case class PartitionHiveParquetScroogeSink[A, T <: ThriftStruct](
     partitionSet.arity == partitionColumns.length,
     "The size of the partition type needs to match the number of specified partion columns"
   )
-  val  hdfsScheme =
-    HadoopSchemeInstance(new ParquetScroogeScheme[T].asInstanceOf[Scheme[_, _, _, _, _]])
+  val hdfsScheme =
+    HadoopSchemeInstance(Util.createSchemaBasedOnFormat(ParquetFormat))
 
   hdfsScheme.setSinkFields(Dsl.strFields(List("0")))
 
@@ -75,7 +75,7 @@ case class PartitionHiveParquetScroogeSink[A, T <: ThriftStruct](
         }
 
         val tableDescriptor =
-          Util.createHiveTableDescriptor[T](database, table, partitionColumns, path)
+          Util.createHiveTableDescriptor[T](database, table, partitionColumns, ParquetFormat, path)
 
         val tap = new HivePartitionTap(
           new HiveTap(tableDescriptor, hdfsScheme, SinkMode.REPLACE, true), SinkMode.UPDATE
@@ -183,9 +183,9 @@ case class PartitionHiveParquetScroogeSource[T <: ThriftStruct](
     extends Source
     with Mappable[T]
     with java.io.Serializable {
-  val tableDescriptor = Util.createHiveTableDescriptor[T](database, table, partitionColumns)
+  val tableDescriptor = Util.createHiveTableDescriptor[T](database, table, partitionColumns, ParquetFormat)
   val hdfsScheme =
-    HadoopSchemeInstance(new ParquetScroogeScheme[T].asInstanceOf[Scheme[_, _, _, _, _]])
+    HadoopSchemeInstance(Util.createSchemaBasedOnFormat(ParquetFormat))
 
   override def createTap(readOrWrite: AccessMode)(implicit mode: Mode): Tap[_, _, _] = mode match {
     case Local(_)              => sys.error("Local mode is currently not supported for ${toString}")

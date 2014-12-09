@@ -35,6 +35,7 @@ build.number
 .#*
 .ensime_lucene
 .ensime
+.ensime_cache
 
 project/source.scala
 derby.log

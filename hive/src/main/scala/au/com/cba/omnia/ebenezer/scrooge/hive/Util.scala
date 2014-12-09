@@ -14,6 +14,11 @@
 
 package au.com.cba.omnia.ebenezer.scrooge.hive
 
+import au.com.cba.omnia.ebenezer.scrooge.ParquetScroogeScheme
+import cascading.scheme.Scheme
+import cascading.scheme.hadoop.TextDelimited
+import cascading.scheme.hadoop.TextLine
+
 import scala.collection.{Map => CMap}
 
 import org.apache.thrift.protocol.TType
@@ -25,6 +30,8 @@ import org.apache.hadoop.fs.Path
 import com.twitter.scalding.{Dsl, TupleConverter, TupleSetter}
 
 import com.twitter.scrooge.{ThriftStruct, ThriftStructCodec, ThriftStructField}
+
+import cascading.tap.hive.HiveTableDescriptor
 
 import au.com.cba.omnia.ebenezer.reflect.Reflect
 
@@ -81,7 +88,7 @@ object Util {
 
   /** Creates a hive parquet table descriptor based on a thrift struct.*/
   def createHiveTableDescriptor[T <: ThriftStruct]
-    (database: String, table: String, partitionColumns: List[(String, String)], location: Option[Path] = None)
+    (database: String, table: String, partitionColumns: List[(String, String)], format: HiveFormat, location: Option[Path] = None)
     (implicit m: Manifest[T])= {
     val thrift: Class[T]     = m.runtimeClass.asInstanceOf[Class[T]]
     val codec                = Reflect.companionOf(thrift).asInstanceOf[ThriftStructCodec[_ <: ThriftStruct]]
@@ -99,10 +106,28 @@ object Util {
       "Partition columns must be different from the fields in the thrift struct"
     )
 
-    new ParquetTableDescriptor(
-      database, table, columns, types,
-      partitionColumns.map(_._1).toArray, location.getOrElse(null)
-    )
+    format match {
+      case TextFormat    =>
+        new HiveTableDescriptor(
+          database, table, columns, types,
+          partitionColumns.map(_._1).toArray,
+          HiveTableDescriptor.HIVE_DEFAULT_DELIMITER,
+          HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME,
+          location.getOrElse(null)
+        )
+      case ParquetFormat =>
+        new ParquetTableDescriptor(
+          database, table, columns, types,
+          partitionColumns.map(_._1).toArray, location.getOrElse(null)
+        )
+    }
+  }
+
+  def createSchemaBasedOnFormat[T <: ThriftStruct]
+    (format: HiveFormat)
+    (implicit m: Manifest[T]): Scheme[_, _, _, _, _] = format match {
+    case TextFormat    => throw new UnsupportedOperationException("not yet supported")
+    case ParquetFormat => new ParquetScroogeScheme[T].asInstanceOf[Scheme[_, _, _, _, _]]
   }
 
   /** Maps Thrift types to Hive types.*/
