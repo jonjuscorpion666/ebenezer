@@ -88,7 +88,7 @@ object Util {
 
   /** Creates a hive parquet table descriptor based on a thrift struct.*/
   def createHiveTableDescriptor[T <: ThriftStruct]
-    (database: String, table: String, partitionColumns: List[(String, String)], format: HiveFormat, location: Option[Path] = None)
+    (database: String, table: String, partitionColumns: List[(String, String)], format: HiveStorageFormat, location: Option[Path] = None)
     (implicit m: Manifest[T])= {
     val thrift: Class[T]     = m.runtimeClass.asInstanceOf[Class[T]]
     val codec                = Reflect.companionOf(thrift).asInstanceOf[ThriftStructCodec[_ <: ThriftStruct]]
@@ -124,7 +124,7 @@ object Util {
   }
 
   def createSchemaBasedOnFormat[T <: ThriftStruct]
-    (format: HiveFormat)
+    (format: HiveStorageFormat)
     (implicit m: Manifest[T]): Scheme[_, _, _, _, _] = format match {
     case TextFormat    => throw new UnsupportedOperationException("not yet supported")
     case ParquetFormat => new ParquetScroogeScheme[T].asInstanceOf[Scheme[_, _, _, _, _]]

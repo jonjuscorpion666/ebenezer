@@ -24,11 +24,30 @@ import org.apache.hadoop.mapred.JobConf
 object HiveTableCreatorSpec extends ThermometerSpec with HiveSupport { def is = s2"""
 =========================
 
-  creates hive table     $newTable
+  creates hive table with TextFormat     $newTextTable
+  creates hive table with ParquetFormat  $newParquetTable
 """
 
-  def newTable = {
-    val newTableName = "test"
+  def newTextTable = {
+    val newTableName = "testtext"
+    val newDbName    = "normalhive"
+
+    HiveTableCreator.create[SimpleHive](newDbName, newTableName, List(), TextFormat)
+
+    val client        = HiveTableCreator.createMetaStoreClient()
+    val table         = client.getTable(newDbName, newTableName)
+    val columns       = table.getSd().getCols()
+    val hiveTableName = table.getTableName()
+
+    client.close
+    
+    table.getSd().getInputFormat() must_== "org.apache.hadoop.mapred.TextInputFormat"
+    columns.get(0).getName()       must_== "stringfield"
+    newTableName                   must_== hiveTableName
+  }
+
+  def newParquetTable = {
+    val newTableName = "testparquet"
     val newDbName    = "normalhive"
 
     HiveTableCreator.create[SimpleHive](newDbName, newTableName, List(), ParquetFormat)
@@ -39,9 +58,9 @@ object HiveTableCreatorSpec extends ThermometerSpec with HiveSupport { def is = 
     val hiveTableName = table.getTableName()
 
     client.close
-
-   
-    columns.get(0).getName() must_== "stringfield"
-    newTableName             must_== hiveTableName
+    
+    table.getSd().getInputFormat() must_== "parquet.hive.DeprecatedParquetInputFormat"
+    columns.get(0).getName()       must_== "stringfield"
+    newTableName                   must_== hiveTableName
   }
 }

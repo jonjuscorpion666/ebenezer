@@ -32,7 +32,7 @@ Hive Parquet properties
 
   def normalHive = {
     source
-      .write(HiveParquetScroogeSource[SimpleHive]("normalhive", "test", ParquetFormat, None))
+      .write(HiveParquetScroogeSource[SimpleHive]("normalhive", "test", None))
       .withFacts(
         hiveWarehouse </> "normalhive.db" </> "test" </> "*.parquet" ==> matchesFile
       )
@@ -42,12 +42,3 @@ Hive Parquet properties
   def source =  ThermometerSource(data)
   def matchesFile = PathFactoid((context, path) => !context.glob(path).isEmpty)
 }
-
-
-
-
-
-
-
-
-
