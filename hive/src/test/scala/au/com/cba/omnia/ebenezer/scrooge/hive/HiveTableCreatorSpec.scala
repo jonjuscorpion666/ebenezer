@@ -32,7 +32,7 @@ object HiveTableCreatorSpec extends ThermometerSpec with HiveSupport { def is = 
     val newTableName = "testtext"
     val newDbName    = "normalhive"
 
-    HiveTableCreator.create[SimpleHive](newDbName, newTableName, List(), TextFormat)
+    HiveTableCreator.createText[SimpleHive](newDbName, newTableName, List())
 
     val client        = HiveTableCreator.createMetaStoreClient()
     val table         = client.getTable(newDbName, newTableName)
@@ -50,7 +50,7 @@ object HiveTableCreatorSpec extends ThermometerSpec with HiveSupport { def is = 
     val newTableName = "testparquet"
     val newDbName    = "normalhive"
 
-    HiveTableCreator.create[SimpleHive](newDbName, newTableName, List(), ParquetFormat)
+    HiveTableCreator.createParquet[SimpleHive](newDbName, newTableName, List())
 
     val client        = HiveTableCreator.createMetaStoreClient()
     val table         = client.getTable(newDbName, newTableName)

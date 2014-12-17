@@ -38,7 +38,7 @@ Hive Parquet properties
       )
   }
 
-  def data = List(SimpleHive(""), SimpleHive("abc"), SimpleHive("def"))
-  def source =  ThermometerSource(data)
+  val data = List(SimpleHive(""), SimpleHive("abc"), SimpleHive("def"))
+  val source =  ThermometerSource(data)
   def matchesFile = PathFactoid((context, path) => !context.glob(path).isEmpty)
 }

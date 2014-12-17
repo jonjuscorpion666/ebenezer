@@ -14,14 +14,12 @@
 
 package au.com.cba.omnia.ebenezer.scrooge.hive
 
-import scala.util.Success
 import scala.util.{Failure, Try}
 
 import cascading.tap.hive.HiveTableDescriptor
 import com.twitter.scrooge.ThriftStruct
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.hive.conf.HiveConf
-import org.apache.hadoop.hive.conf.HiveConf.ConfVars
 import org.apache.hadoop.hive.metastore.{HiveMetaHookLoader, HiveMetaStoreClient, IMetaStoreClient, RetryingMetaStoreClient}
 import org.apache.hadoop.hive.metastore.api.{Database, NoSuchObjectException}
 import org.apache.hadoop.hive.metastore.api.Table
@@ -30,15 +28,17 @@ import org.apache.hadoop.hive.metastore.api.Table
 object HiveTableCreator {
 
   /**
-    * Creates hive table with hive storage format 
+    * Creates hive table with hive storage format.
+    * Method is not thread safe.
     * 
     * @param database name of the database, will be created if not found
     * @param table name of table to create
-    * @param partitionColumns list of partition columns
+    * @param partitionColumns a list of the partition columns formatted as `[(name, type.)]`.
+    *                         If empty unpartitioned table will be created.
     * @param format storage format of the hive table specify [[ParquetFormat]] for parquet or [[TextFormat]] for text
     * @return Try instace indicating success or failure of the operation
     */
-  def create[T <: ThriftStruct]
+  private def create[T <: ThriftStruct]
     (database: String, table: String, partitionColumns: List[(String, String)], format: HiveStorageFormat, location: Option[Path] = None)
     (implicit m: Manifest[T]): Try[Unit] = {
    
@@ -47,18 +47,36 @@ object HiveTableCreator {
     create(tableDescriptor, location)
   }
 
-  /** Creates hive table with parquet storage format */
+  /**
+    * Creates hive table with Parquet storage format.
+    * Method is not thread safe.
+    *
+    * @param database name of the database, will be created if not found
+    * @param table name of table to create
+    * @param partitionColumns a list of the partition columns formatted as `[(name, type.)]`.
+    *                         If empty unpartitioned table will be created.
+    * @return Try instace indicating success or failure of the operation
+    */
   def createParquet[T <: ThriftStruct]
     (database: String, table: String, partitionColumns: List[(String, String)], location: Option[Path] = None)
     (implicit m: Manifest[T]): Try[Unit] = create(database, table, partitionColumns, ParquetFormat, location)
 
-  /** Creates hive table with text storage format */
+  /**
+    * Creates hive table with text storage format.
+    * Method is not thread safe.
+    *
+    * @param database name of the database, will be created if not found
+    * @param table name of table to create
+    * @param partitionColumns a list of the partition columns formatted as `[(name, type.)]`.
+    *                         If empty unpartitioned table will be created.
+    * @return Try instace indicating success or failure of the operation
+    */
   def createText[T <: ThriftStruct]
     (database: String, table: String, partitionColumns: List[(String, String)], location: Option[Path] = None)
     (implicit m: Manifest[T]): Try[Unit] = create(database, table, partitionColumns, TextFormat, location)
 
   /** Creates hive table based on table descriptor */
-  def create[T <: ThriftStruct](tableDescriptor: HiveTableDescriptor, location: Option[Path] = None): Try[Unit] = {
+  private def create[T <: ThriftStruct](tableDescriptor: HiveTableDescriptor, location: Option[Path] = None): Try[Unit] = {
     val path = location.map(_.toString()).getOrElse(null)
     for {
       metaStoreClient <- Try(createMetaStoreClient())
@@ -98,7 +116,7 @@ object HiveTableCreator {
     * @return new IMetaStoreClient
     * @throws MetaException in case the creation fails.
     */
-  def createMetaStoreClient(): IMetaStoreClient = {
+  protected[hive] def createMetaStoreClient(): IMetaStoreClient = {
     val hiveConf = new HiveConf()
 
     RetryingMetaStoreClient.getProxy(
