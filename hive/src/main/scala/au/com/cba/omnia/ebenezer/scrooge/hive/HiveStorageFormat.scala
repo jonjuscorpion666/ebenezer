@@ -21,14 +21,14 @@ sealed trait HiveStorageFormat
 
 /**
   * By passing [[ParquetFormat]] following classes will be used to format input and output
-  * PARQUET_INPUT_FORMAT = "parquet.hive.DeprecatedParquetInputFormat"
-  * PARQUET_OUTPUT_FORMAT = "parquet.hive.DeprecatedParquetOutputFormat"
+  *  - PARQUET_INPUT_FORMAT = [[parquet.hive.DeprecatedParquetInputFormat]]
+  *  - PARQUET_OUTPUT_FORMAT = [[parquet.hive.DeprecatedParquetOutputFormat]]
   */
 case object ParquetFormat extends HiveStorageFormat
 
 /**
   * By passing [[TextFormat]] default Hive input / output classes will be used
-  * INPUT_FORMAT_NAME = "org.apache.hadoop.mapred.TextInputFormat"
-  * OUTPUT_FORMAT_NAME = "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"
+  *  - INPUT_FORMAT_NAME = [[org.apache.hadoop.mapred.TextInputFormat]]
+  *  - OUTPUT_FORMAT_NAME = [[org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat]]
   */
 case class TextFormat(delimiter: String = HiveTableDescriptor.HIVE_DEFAULT_DELIMITER) extends HiveStorageFormat
