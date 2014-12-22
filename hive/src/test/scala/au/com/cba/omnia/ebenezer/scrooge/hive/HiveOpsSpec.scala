@@ -14,6 +14,8 @@
 
 package au.com.cba.omnia.ebenezer.scrooge.hive
 
+import scala.util.Try
+
 import au.com.cba.omnia.thermometer.core.{ Thermometer, ThermometerSource, ThermometerSpec }, Thermometer._
 import au.com.cba.omnia.thermometer.hive.HiveSupport
 
@@ -32,35 +34,29 @@ object HiveTableCreatorSpec extends ThermometerSpec with HiveSupport { def is = 
     val newTableName = "testtext"
     val newDbName    = "normalhive"
 
-    HiveTableCreator.createText[SimpleHive](newDbName, newTableName, List())
+    HiveOps.createTable[SimpleHive](newDbName, newTableName, List(), None, TextFormat())
 
-    val client        = HiveTableCreator.createMetaStoreClient()
-    val table         = client.getTable(newDbName, newTableName)
-    val columns       = table.getSd().getCols()
-    val hiveTableName = table.getTableName()
+    val table         = HiveOps.withMetaStoreClient(client => Try(client.getTable(newDbName, newTableName))).get
+    val columns       = table.getSd.getCols
+    val hiveTableName = table.getTableName
 
-    client.close
-    
-    table.getSd().getInputFormat() must_== "org.apache.hadoop.mapred.TextInputFormat"
-    columns.get(0).getName()       must_== "stringfield"
-    newTableName                   must_== hiveTableName
+    table.getSd.getInputFormat must_== "org.apache.hadoop.mapred.TextInputFormat"
+    columns.get(0).getName     must_== "stringfield"
+    newTableName               must_== hiveTableName
   }
 
   def newParquetTable = {
     val newTableName = "testparquet"
     val newDbName    = "normalhive"
 
-    HiveTableCreator.createParquet[SimpleHive](newDbName, newTableName, List())
+    HiveOps.createTable[SimpleHive](newDbName, newTableName, List(), None)
 
-    val client        = HiveTableCreator.createMetaStoreClient()
-    val table         = client.getTable(newDbName, newTableName)
-    val columns       = table.getSd().getCols()
-    val hiveTableName = table.getTableName()
+    val table         = HiveOps.withMetaStoreClient(client => Try(client.getTable(newDbName, newTableName))).get
+    val columns       = table.getSd.getCols
+    val hiveTableName = table.getTableName
 
-    client.close
-    
-    table.getSd().getInputFormat() must_== "parquet.hive.DeprecatedParquetInputFormat"
-    columns.get(0).getName()       must_== "stringfield"
-    newTableName                   must_== hiveTableName
+    table.getSd.getInputFormat must_== "parquet.hive.DeprecatedParquetInputFormat"
+    columns.get(0).getName     must_== "stringfield"
+    newTableName               must_== hiveTableName
   }
 }

@@ -27,7 +27,7 @@ import com.twitter.scalding._
 
 import com.twitter.scrooge.ThriftStruct
 
-/** 
+/**
   * Source to read unpartitioned Hive tables where the data is the specified thrift struct stored
   * in Parquet format.
   */
@@ -40,7 +40,7 @@ case class HiveParquetScroogeSource[T <: ThriftStruct]
   with java.io.Serializable {
 
   lazy val hdfsScheme =
-    HadoopSchemeInstance(Util.createSchemaBasedOnFormat(ParquetFormat))
+    HadoopSchemeInstance(Util.parquetScheme[T])
 
   override def createTap(readOrWrite: AccessMode)(implicit mode: Mode): Tap[_, _, _] = mode match {
     case Local(_)              => sys.error("Local mode is currently not supported for ${toString}")

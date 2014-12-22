@@ -31,12 +31,12 @@ import com.twitter.scrooge.ThriftStruct
 /**
   * A scalding sink to write out Scrooge Thrift structs to a partitioned hive table using parquet as
   * underlying storage format.
-  * 
+  *
   * Unfortunately read does not work since the ParquetInputSplit is an instance of
   * mapreduce.FileSplit and cascading will ignore any partitioned input splits that aren't part of
   * mapred.FileSplit.
   * Instead use [[PartitionHiveParquetScroogeSource]] for read.
-  * 
+  *
   * @param partitionColumns a list of the partition columns formatted as `[(name, type)]`.
   * @param append iff true will add new files to an existing partition instead of overwritting it.
   */
@@ -53,7 +53,7 @@ case class PartitionHiveParquetScroogeSink[A, T <: ThriftStruct](
     "The size of the partition type needs to match the number of specified partion columns"
   )
   val hdfsScheme =
-    HadoopSchemeInstance(Util.createSchemaBasedOnFormat(ParquetFormat))
+    HadoopSchemeInstance(Util.parquetScheme[T])
 
   hdfsScheme.setSinkFields(Dsl.strFields(List("0")))
 
@@ -109,12 +109,12 @@ object PartitionHiveParquetScroogeSink {
   /**
     * A scalding sink to write out Scrooge Thrift structs to a partitioned hive table using parquet as
     * underlying storage format.
-    * 
+    *
     * Unfortunately read does not work since the ParquetInputSplit is an instance of
     * mapreduce.FileSplit and cascading will ignore any partitioned input splits that aren't part of
     * mapred.FileSplit.
     * Instead use [[PartitionHiveParquetScroogeSource]] for read.
-    * 
+    *
     * @param partitionColumns a list of the partition columns formatted as `[(name, type.)]`.
     */
   def apply[A, T <: ThriftStruct](
@@ -126,12 +126,12 @@ object PartitionHiveParquetScroogeSink {
   /**
     * A scalding sink to write out Scrooge Thrift structs to a partitioned hive table using parquet as
     * underlying storage format.
-    * 
+    *
     * Unfortunately read does not work since the ParquetInputSplit is an instance of
     * mapreduce.FileSplit and cascading will ignore any partitioned input splits that aren't part of
     * mapred.FileSplit.
     * Instead use [[PartitionHiveParquetScroogeSource]] for read.
-    * 
+    *
     * @param partitionColumns a list of the partition columns formatted as `[(name, type.)]`.
     * @param append iff true will add new files to an existing partition instead of overwritting it.
     */
@@ -173,7 +173,7 @@ class PartitionHiveParquetReadTap(
 }
 /**
   * A scalding source to read Scrooge Thrift structs from a partitioned hive table using parquet as
-  * underlying storage format. It will ignore the partition columns and only read the thrift struct 
+  * underlying storage format. It will ignore the partition columns and only read the thrift struct
   * from the parquet file.
   * Use [[PartitionHiveParquetScroogeSink]] for write.
   */
@@ -185,7 +185,7 @@ case class PartitionHiveParquetScroogeSource[T <: ThriftStruct](
     with java.io.Serializable {
   val tableDescriptor = Util.createHiveTableDescriptor[T](database, table, partitionColumns, ParquetFormat)
   val hdfsScheme =
-    HadoopSchemeInstance(Util.createSchemaBasedOnFormat(ParquetFormat))
+    HadoopSchemeInstance(Util.parquetScheme[T])
 
   override def createTap(readOrWrite: AccessMode)(implicit mode: Mode): Tap[_, _, _] = mode match {
     case Local(_)              => sys.error("Local mode is currently not supported for ${toString}")

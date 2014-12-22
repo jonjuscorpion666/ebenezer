@@ -14,13 +14,15 @@
 
 package au.com.cba.omnia.ebenezer.scrooge.hive
 
+import cascading.tap.hive.HiveTableDescriptor
+
 /** Data type used to indicate Input and Output format for Hive table */
 sealed trait HiveStorageFormat
 
 /**
-  * By passing [[ParquetFormat]] following classes will be used to format input and output  
+  * By passing [[ParquetFormat]] following classes will be used to format input and output
   * PARQUET_INPUT_FORMAT = "parquet.hive.DeprecatedParquetInputFormat"
-  * PARQUET_OUTPUT_FORMAT = "parquet.hive.DeprecatedParquetOutputFormat" 
+  * PARQUET_OUTPUT_FORMAT = "parquet.hive.DeprecatedParquetOutputFormat"
   */
 case object ParquetFormat extends HiveStorageFormat
 
@@ -29,4 +31,4 @@ case object ParquetFormat extends HiveStorageFormat
   * INPUT_FORMAT_NAME = "org.apache.hadoop.mapred.TextInputFormat"
   * OUTPUT_FORMAT_NAME = "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"
   */
-case object TextFormat    extends HiveStorageFormat
+case class TextFormat(delimiter: String = HiveTableDescriptor.HIVE_DEFAULT_DELIMITER) extends HiveStorageFormat

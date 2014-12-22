@@ -61,7 +61,7 @@ object Util {
           (0 until valueConverter.arity).foreach(idx => value.setObject(idx, te.getObject(idx)))
           (0 until partitionConverter.arity).foreach(idx =>
             partition.setObject(idx, te.getObject(idx + valueConverter.arity)))
-        
+
         (partitionConverter(partition), valueConverter(value))
       }
     })
@@ -107,11 +107,11 @@ object Util {
     )
 
     format match {
-      case TextFormat    =>
+      case TextFormat(delimiter) =>
         new HiveTableDescriptor(
           database, table, columns, types,
           partitionColumns.map(_._1).toArray,
-          HiveTableDescriptor.HIVE_DEFAULT_DELIMITER,
+          delimiter,
           HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME,
           location.getOrElse(null)
         )
@@ -123,12 +123,8 @@ object Util {
     }
   }
 
-  def createSchemaBasedOnFormat[T <: ThriftStruct]
-    (format: HiveStorageFormat)
-    (implicit m: Manifest[T]): Scheme[_, _, _, _, _] = format match {
-    case TextFormat    => throw new UnsupportedOperationException("not yet supported")
-    case ParquetFormat => new ParquetScroogeScheme[T].asInstanceOf[Scheme[_, _, _, _, _]]
-  }
+  def parquetScheme[T <: ThriftStruct](implicit m: Manifest[T]): Scheme[_, _, _, _, _] =
+    new ParquetScroogeScheme[T].asInstanceOf[Scheme[_, _, _, _, _]]
 
   /** Maps Thrift types to Hive types.*/
   def mapType(field: ThriftStructField[_]): String = {
@@ -140,7 +136,7 @@ object Util {
       case TType.I64    => "bigint"
       case TType.DOUBLE => "double"
       case TType.STRING => "string"
-        
+
       // 1 type param
       case TType.LIST   => {
         val elementType = toThriftType(argsOf(field).head)
@@ -148,7 +144,7 @@ object Util {
       }
       case TType.SET    => throw new Exception("SET is not a supported Hive type")
       case TType.ENUM   => throw new Exception("ENUM is not a supported Hive type")
-        
+
       // 2 type params
       case TType.MAP    => {
         val args      = argsOf(field)
@@ -156,10 +152,10 @@ object Util {
         val valueType = toThriftType(args(1))
         s"map<$keyType,$valueType>"
       }
-        
+
       // n type params
       case TType.STRUCT => throw new Exception("STRUCT is not a supported Hive type")
-        
+
       // terminals
       case TType.VOID   => throw new Exception("VOID is not a supported Hive type")
       case TType.STOP   => throw new Exception("STOP is not a supported Hive type")
