@@ -30,32 +30,22 @@ object HiveTableCreatorSpec extends ThermometerSpec with HiveSupport { def is = 
   creates hive table with ParquetFormat  $newParquetTable
 """
 
-  def newTextTable = {
-    val newTableName = "testtext"
-    val newDbName    = "normalhive"
+  def newTextTable = newTableTest(
+    "testtext", "normalhive", TextFormat(), "org.apache.hadoop.mapred.TextInputFormat"
+  )
 
-    HiveOps.createTable[SimpleHive](newDbName, newTableName, List(), None, TextFormat())
+  def newParquetTable = newTableTest(
+    "testparquet", "normalhive", ParquetFormat, "parquet.hive.DeprecatedParquetInputFormat"
+  )
 
-    val table         = HiveOps.withMetaStoreClient(client => Try(client.getTable(newDbName, newTableName))).get
-    val columns       = table.getSd.getCols
-    val hiveTableName = table.getTableName
-
-    table.getSd.getInputFormat must_== "org.apache.hadoop.mapred.TextInputFormat"
-    columns.get(0).getName     must_== "stringfield"
-    newTableName               must_== hiveTableName
-  }
-
-  def newParquetTable = {
-    val newTableName = "testparquet"
-    val newDbName    = "normalhive"
-
-    HiveOps.createTable[SimpleHive](newDbName, newTableName, List(), None)
+  def newTableTest(newTableName: String, newDbName: String, format: HiveStorageFormat, expectedFormatClass: String) = {
+    HiveOps.createTable[SimpleHive](newDbName, newTableName, List(), None, format)
 
     val table         = HiveOps.withMetaStoreClient(client => Try(client.getTable(newDbName, newTableName))).get
     val columns       = table.getSd.getCols
     val hiveTableName = table.getTableName
 
-    table.getSd.getInputFormat must_== "parquet.hive.DeprecatedParquetInputFormat"
+    table.getSd.getInputFormat must_== expectedFormatClass
     columns.get(0).getName     must_== "stringfield"
     newTableName               must_== hiveTableName
   }
