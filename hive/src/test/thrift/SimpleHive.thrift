@@ -17,3 +17,7 @@
 struct SimpleHive {
   1: string  stringfield
 }
+
+struct SimpleHive2 {
+  1: string  stringfield2
+}
