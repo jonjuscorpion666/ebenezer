@@ -14,8 +14,6 @@
 
 package au.com.cba.omnia.ebenezer.scrooge.hive
 
-import cascading.tap.hive.HiveTableDescriptor
-
 /** Data type used to indicate Input and Output format for Hive table */
 sealed trait HiveStorageFormat
 
@@ -31,4 +29,8 @@ case object ParquetFormat extends HiveStorageFormat
   *  - INPUT_FORMAT_NAME = [[org.apache.hadoop.mapred.TextInputFormat]]
   *  - OUTPUT_FORMAT_NAME = [[org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat]]
   */
-case class TextFormat(delimiter: String = HiveTableDescriptor.HIVE_DEFAULT_DELIMITER) extends HiveStorageFormat
+case class TextFormat(delimiter: String = TextFormat.DEFAULT_DELIMITER) extends HiveStorageFormat
+
+object TextFormat {
+  val DEFAULT_DELIMITER = "\1"
+}
