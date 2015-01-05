@@ -27,6 +27,7 @@ import au.com.cba.omnia.humbug.HumbugSBT._
 object build extends Build {
   val thermometerVersion = "0.5.3-20141231053048-776c9a5"
   val parquetVersion     = "1.2.5-cdh4.6.0-p485"
+  val omnitoolVersion   = "1.5.0-20150105001358-0e640c9"
 
   lazy val standardSettings =
     Defaults.defaultSettings ++
@@ -77,11 +78,11 @@ object build extends Build {
         ++ Seq(
           libraryDependencies ++=
             depend.hadoop() ++ depend.scalaz() ++ depend.testing() ++
-            depend.omnia("thermometer", thermometerVersion) ++ Seq(
+            depend.omnia("thermometer-hive", thermometerVersion) ++ Seq(
               "com.twitter" % "parquet-cascading" % parquetVersion % "provided"
             )
         )
-  ).dependsOn(core)
+  ).dependsOn(hive)
 
   lazy val hive = Project(
     id = "hive",
@@ -94,10 +95,11 @@ object build extends Build {
           libraryDependencies ++=
             depend.hadoop() ++ depend.scalding() ++ depend.testing() ++
             depend.omnia("cascading-hive", "1.6.2-20141117232743-f0a90c6") ++
-            depend.omnia("omnitool-core", "1.5.0-20150105001358-0e640c9") ++
+            depend.omnia("omnitool-core", omnitoolVersion) ++
             Seq(
               "com.twitter"       % "parquet-cascading" % parquetVersion     % "provided",
-              "au.com.cba.omnia" %% "thermometer-hive"  % thermometerVersion % "test"
+              "au.com.cba.omnia" %% "thermometer-hive"  % thermometerVersion % "test",
+              "au.com.cba.omnia" %% "omnitool-core"     % omnitoolVersion % "test" classifier "tests"
             ),
           parallelExecution in Test := false
         )
