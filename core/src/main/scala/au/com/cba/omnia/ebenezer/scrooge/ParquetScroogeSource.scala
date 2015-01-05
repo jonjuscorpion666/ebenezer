@@ -25,8 +25,8 @@ import org.apache.thrift._
 
 import parquet.cascading._
 
-case class ParquetScroogeSource[T <: ThriftStruct](p : String)(implicit m : Manifest[T], conv: TupleConverter[T], set: TupleSetter[T])
-  extends FixedPathSource(p)
+case class ParquetScroogeSource[T <: ThriftStruct](p : String*)(implicit m : Manifest[T], conv: TupleConverter[T], set: TupleSetter[T])
+  extends FixedPathSource(p: _*)
   with TypedSink[T]
   with Mappable[T]
   with java.io.Serializable {
