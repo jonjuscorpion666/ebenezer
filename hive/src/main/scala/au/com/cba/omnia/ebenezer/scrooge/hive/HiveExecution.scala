@@ -28,8 +28,10 @@ import cascading.flow.hive.HiveFlow
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars
 
 /** Methods to run Hive queries inside the Execution monad. */
+@deprecated("Use the query/queries method in Hive instead", "0.12")
 object HiveExecution {
   /** Runs the specified hive queries inside the Execution monad. */
+  @deprecated("Use the query/queries method in Hive instead", "0.12")
   def query(name: String, queries: String*): Execution[Unit] =
     rawQuery(name, None, Map.empty, queries)
 
@@ -38,10 +40,12 @@ object HiveExecution {
     *
     * The specified output is used to create the target table before the job starts.
     */
+  @deprecated("Use the query/queries method in Hive instead", "0.12")
   def query(name: String, output: Source, queries: String*): Execution[Unit] =
     rawQuery(name, Some(output), Map.empty, queries)
 
   /** Runs the specified hive queries inside the Execution monad. */
+  @deprecated("Use the query/queries method in Hive instead", "0.12")
   def query(name: String, hiveSettings: Map[ConfVars, String], queries: String*): Execution[Unit] =
     rawQuery(name, None, hiveSettings, queries)
 
@@ -50,6 +54,7 @@ object HiveExecution {
     *
     * The specified output is used to create the target table before the job starts.
     */
+  @deprecated("Use the query/queries method in Hive instead", "0.12")
   def query(name: String, output: Source, hiveSettings: Map[ConfVars, String], queries: String*): Execution[Unit] =
     rawQuery(name, Some(output), hiveSettings, queries)
 
