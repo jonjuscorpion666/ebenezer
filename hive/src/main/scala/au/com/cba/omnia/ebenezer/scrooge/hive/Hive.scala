@@ -18,6 +18,8 @@ import scala.collection.JavaConverters._
 import scala.util.{Failure, Try, Success}
 import scala.util.control.NonFatal
 
+import java.util.ArrayList
+
 import scalaz._, Scalaz._
 
 import cascading.tap.hive.HiveTableDescriptor
@@ -30,6 +32,8 @@ import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars
 import org.apache.hadoop.hive.metastore.{HiveMetaHookLoader, HiveMetaStoreClient, IMetaStoreClient, RetryingMetaStoreClient}
 import org.apache.hadoop.hive.metastore.api.{Database, Table, AlreadyExistsException, NoSuchObjectException}
+import org.apache.hadoop.hive.ql.Driver
+import org.apache.hadoop.hive.ql.session.SessionState
 
 import au.com.cba.omnia.omnitool.Result
 
@@ -316,6 +320,60 @@ object Hive {
     case _: NoSuchObjectException => Result.ok(false)
     case NonFatal(t)              => Result.error(s"Failed to check strict existence of $database.$table", t)
   })
+
+  /** Runs the specified Hive query. Returns at most `maxRows` */
+  def query(query: String, maxRows: Int = 100): Hive[List[String]] = Hive { (conf, _) =>
+    SessionState.start(conf)
+    SessionState.get().setIsSilent(true)
+    val driver = new Driver(conf)
+    try {
+      driver.init()
+      driver.setMaxRows(maxResults)
+      val response = driver.run(query)
+      if (response.getResponseCode() != 0)
+        Result.fail(s"Error running query '$query'. ${response.getErrorMessage}")
+      else {
+        val results    = new ArrayList[String]()
+        val gotResults = driver.getResults(results)
+        if (gotResults) Result.ok(results.asScala.toList)
+        else            Result.ok(List.empty[String])
+      }
+    } catch {
+      case NonFatal(ex) => Result.error(s"Error trying to run query '$query'", ex)
+    } finally {
+      driver.destroy()
+    }
+  }
+
+  /** Runs the specified Hive queries. Returns at most `maxRows` per query */
+  def queries(queries: List[String], maxRows: Int = 100): Hive[List[List[String]]] = Hive { (conf, _) =>
+    SessionState.start(conf)
+    SessionState.get().setIsSilent(true)
+    val driver = new Driver(conf)
+    try {
+      driver.init()
+      driver.setMaxRows(maxResults)
+      queries.traverse { query =>
+        try {
+          val response = driver.run(query)
+          if (response.getResponseCode() != 0)
+            Result.fail(s"Error running query '$query'. ${response.getErrorMessage}")
+          else {
+            val results    = new ArrayList[String]()
+            val gotResults = driver.getResults(results)
+            if (gotResults) Result.ok(results.asScala.toList)
+            else            Result.ok(List.empty[String])
+          }
+        } catch {
+          case NonFatal(ex)=> Result.error(s"Error trying to run query '$query'", ex)
+        }
+      }
+    } catch {
+      case NonFatal(ex) => Result.error(s"""Error trying to set up running queries ${queries.mkString(",")}""", ex)
+    } finally {
+      driver.destroy()
+    }
+  }
 
   implicit def HiveMonad: Monad[Hive] = new Monad[Hive] {
     def point[A](v: => A) = result(Result.ok(v))
